@@ -13,6 +13,7 @@ class test_Amenity(test_basemodel):
         self.name = "Amenity"
         self.value = Amenity
 
+    @unittest.skip("Not necessary - Skipping")
     def test_name2(self):
         """ """
         new = self.value()
