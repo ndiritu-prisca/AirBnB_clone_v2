@@ -7,14 +7,20 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.types import DateTime
 import models
 
-Base = declarative_base()
+if models.storage_t == "db":
+    Base = declarative_base()
+else:
+    Base = object
 
 
 class BaseModel:
     """A base class for all hbnb models"""
-    id = Column(String(60), nullable=False, primary_key=True)
-    created_at = Column(DateTime, default=datetime.utcnow(), nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow(), nullable=False)
+    if models.stroage_t == "db":
+        id = Column(String(60), nullable=False, primary_key=True)
+        created_at = Column(DateTime, default=datetime.utcnow(),
+                            nullable=False)
+        updated_at = Column(DateTime, default=datetime.utcnow(),
+                            nullable=False)
 
     def __init__(self, *args, **kwargs):
         """Instantiates a new model"""
