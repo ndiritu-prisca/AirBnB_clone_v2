@@ -18,40 +18,37 @@ class FileStorage:
     def all(self, cls=None):
         """Returns a dictionary of models currently in storage"""
         if cls is None:
-            return FileStorage.__objects
+            return self.__objects
         cls_objects = {}
-        for key, value in FileStorage.__objects.items():
+        for key, value in self.__objects.items():
             if cls == type(value):
                 cls_objects.update({key: value})
         return cls_objects
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
-        self.all().update({obj.to_dict()['__class__'] + '.' + obj.id: obj})
+        if obj:
+            key = "{}.{}".format(type(obj).__name__, obj.id)
+            self.__objects[key] = obj
 
     def save(self):
         """Saves storage dictionary to file"""
-        with open(FileStorage.__file_path, 'w') as f:
-            temp = {}
-            temp.update(FileStorage.__objects)
-            for key, val in temp.items():
-                temp[key] = val.to_dict()
-            json.dump(temp, f)
+        dictionary = {}
+        for key, value in self.__objects.items():
+            dictionary[key] = value.to_dict()
+        with open(self.__file_path, 'w', encoding="UTF-8") as f:
+            json.dump(dictionary, f)
 
     def reload(self):
         """Loads storage dictionary from file"""
 
-        classes = {
-                    'BaseModel': BaseModel, 'User': User, 'Place': Place,
-                    'State': State, 'City': City, 'Amenity': Amenity,
-                    'Review': Review
-                  }
         try:
             temp = {}
             with open(FileStorage.__file_path, 'r') as f:
                 temp = json.load(f)
                 for key, val in temp.items():
-                    self.all()[key] = classes[val['__class__']](**val)
+                    val = eval(val["__class__"])(**val)
+                    self.__objects[key] = val
         except FileNotFoundError:
             pass
 
@@ -61,5 +58,8 @@ class FileStorage:
             return
         key = obj.__class__.__name__ + '.' + obj.id
         if key in self.__objects:
-            del obj
             del self.__objects[key]
+
+    def close(self):
+        """Calls reload"""
+        self.reload()
