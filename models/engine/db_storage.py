@@ -19,32 +19,36 @@ class DBStorage:
 
     def __init__(self):
         """Initialization of DBStorage"""
+        user = getenv("HBNB_MYSQL_USER")
+        password = getenv("HBNB_MYSQL_PWD")
+        host = getenv("HBNB_MYSQL_HOST")
+        database = getenv("HBNB_MYSQL_DB")
+        env = getenv("HBNB_ENV")
+
         self.__engine = create_engine(
-            'mysql+mysqldb://{}:{}@{}/{}'.format(
-                getenv("HBNB_MYSQL_USER"),
-                getenv("HBNB_MYSQL_PWD"),
-                getenv("HBNB_MYSQL_HOST"),
-                getenv("HBNB_MYSQL_DB")), pool_pre_ping=True)
-        if getenv("HBNB_ENV") == "test":
+            'mysql+mysqldb://{}:{}@{}/{}'
+            .format(user, password, host, database),
+            pool_pre_ping=True
+        )
+
+        if env == "test":
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
         """Shows all the instances"""
         my_dict = {}
         if cls is None:
-            cls_list = ["State", "City", "User", "Place", "Review", "Amenity"]
-
-            for cl in cls_list:
-                objs = self.__session.query(eval(cl))
-                for obj in objs:
-                    key = "{}.{}".format(type(obj).__name__, obj.id)
-                    my_dict[key] = obj
-
-        else:
             objs = self.__session.query(cls).all()
             for obj in objs:
                 key = "{}.{}".format(type(obj).__name__, obj.id)
                 my_dict[key] = obj
+
+        else:
+            for cl in [Amenity, City, Place, Review, State, User]: 
+                objs = self.__session.query((cl))
+                for obj in objs.all():
+                    key = "{}.{}".format(type(obj).__name__, obj.id)
+                    my_dict[key] = obj
 
         return my_dict
 
@@ -67,7 +71,3 @@ class DBStorage:
         sess = sessionmaker(bind=self.__engine, expire_on_commit=False)
         Session = scoped_session(sess)
         self.__session = Session()
-
-    def close(self):
-        """Closes session"""
-        self.__session.close()
